@@ -261,6 +261,8 @@ for t, c in zip(data[col_to_transform].dtypes, data[col_to_transform].columns):
     if t in ('int64', 'float64'):
         data[c] = (data[c] - min(data[c]))/(max(data[c]) - min(data[c])) + 1e-6
         data[c+'_log'] = np.log(data[c]).replace([np.inf, -np.inf], 0)
+
+data['amount_sent_receive_logratio'] = data['amount_sent_log'] / data['amount_received_log']
 ####
 # 'business_type', 'area_name'
 to_onehot = ['business_type',
