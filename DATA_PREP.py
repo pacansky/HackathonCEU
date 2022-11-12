@@ -280,18 +280,18 @@ cols_to_drop = [
     'n_bonuses', 'n_penalties',
     'n_transactions',
     'n_transactions_received', 'n_transactions_sent',
-    'n_transactions_received_log', 'n_transactions_sent_log',
+    #'n_transactions_received_log', 'n_transactions_sent_log',
     'count_received_intensity', 'count_sent_intensity',
     'n_partners', 'n_partners_stage_2',
     'days_before_first_trx',
 
     'n_partners_received',
     'n_partners_received', 'n_partners_sent',
-    'n_partners_received_log', 'n_partners_sent_log',
+    #'n_partners_received_log', 'n_partners_sent_log',
     'n_partners_received_stage_2', 'n_partners_sent_stage_2',
-    'n_partners_received_stage_2_log', 'n_partners_sent_stage_2_log',
+    #'n_partners_received_stage_2_log', 'n_partners_sent_stage_2_log',
 
-    'count_received_intensity_log', 'count_sent_intensity_log',
+    #'count_received_intensity_log', 'count_sent_intensity_log',
     'n_partners_ratio', 'n_transactions_ratio', 'count_intensity_ratio',
     'n_partners_stage_2_ratio', 'count_intensity',
 
