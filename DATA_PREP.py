@@ -110,7 +110,6 @@ data['first_trx_date'] = data['first_trx_date'].fillna(
 
 data['last_trx_date'] = pd.to_datetime(data['last_trx_date'])
 
-data.drop(columns=['gender', 'area_type'], inplace=True)
 
 data['days_past_last_trxs'] = data['last_trx_date'].max() - data['last_trx_date']
 data['days_past_last_trxs'] = data['days_past_last_trxs'].dt.days
@@ -207,33 +206,101 @@ data['n_partners_stage_2_ratio'] = (data['n_partners_received_stage_2']/
 data['n_partners_stage_2_ratio_log'] = (data['n_partners_received_stage_2_log']/
                                         data['n_partners_sent_stage_2_log'])
 #data_penalties = np.
+####
+# amount_received
+transactions_received = data_trxs.groupby('target')['amount'].sum().reset_index()
+transactions_received = transactions_received.rename(columns={'amount': 'amount_received',
+                                                              'target': 'id'})
+data = data.merge(transactions_received,
+                  on='id', how='left')
+
+# amount_sent
+transactions_sent = data_trxs.groupby('source')['amount'].sum().reset_index()
+transactions_sent = transactions_sent.rename(columns={'amount': 'amount_sent',
+                                                      'source': 'id'})
+data = data.merge(transactions_sent,
+                  on='id', how='left')
+# amount_total
+data['amount_total'] = data['amount_sent'] + data['amount_received']
+
+# amount_bonuses
+transactions_bonuses = data_trxs[data_trxs['source'] == -1
+                                ].groupby('target')['amount'].sum().reset_index()
+transactions_bonuses = transactions_bonuses.rename(columns={'amount': 'amount_bonuses',
+                                                            'target': 'id'})
+data = data.merge(transactions_bonuses,
+                  on='id', how='left')
+
+# amount_penalties
+transactions_penalties = data_trxs[data_trxs['target'] == -1
+                                  ].groupby('source')['amount'].sum().reset_index()
+transactions_penalties = transactions_penalties.rename(columns={'amount': 'amount_penalties',
+                                                                'source': 'id'})
+data = data.merge(transactions_penalties,
+                  on='id', how='left')
+
+# balance_growth
+data['balance_growth'] = data['start_balance'] + data['amount_received'] - data['amount_sent']
+
+# amount_intensity
+data['amount_intensity'] = data['amount_total'] / data['days_from_registr']
+
+# amount_sent_intensity
+data['amount_sent_intensity'] = data['amount_sent'] / data['days_from_registr']
+
+# amount_received_intensity
+data['amount_received_intensity'] = data['amount_received'] / data['days_from_registr']
+
+col_to_transform = ['amount_received_intensity', 'amount_sent_intensity',
+    'amount_intensity', 'balance_growth', 'amount_penalties', 'amount_bonuses',
+    'amount_total', 'amount_sent', 'amount_received']
+####
+
+for t, c in zip(data[col_to_transform].dtypes, data[col_to_transform].columns):
+    if t in ('int64', 'float64'):
+        data[c] = (data[c] - min(data[c]))/(max(data[c]) - min(data[c])) + 1e-6
+        data[c+'_log'] = np.log(data[c]).replace([np.inf, -np.inf], 0)
+####
+# 'business_type', 'area_name'
+to_onehot = ['business_type',
+             'area_name', 'area_type', 'gender']
+
+for c in to_onehot:
+    for i, k in data[c].value_counts(normalize=True).items():
+        if k > 0.1:
+            data[i] = np.where(data[c] == i, 1, 0)
+    if all(data[c].value_counts(normalize=True) > 0.1):
+        col_to_drop = data[c].value_counts().sort_values(ascending=True).index[0]
+        data.drop(columns=[col_to_drop], inplace=True)
+####
 
 cols_to_drop = [
     'id', 'start_balance',
     'n_bonuses', 'n_penalties',
-    'n_transactions', 
+    'n_transactions',
     'n_transactions_received', 'n_transactions_sent',
     'n_transactions_received_log', 'n_transactions_sent_log',
     'count_received_intensity', 'count_sent_intensity',
-    'n_partners', 'n_partners_stage_2', 
+    'n_partners', 'n_partners_stage_2',
     'days_before_first_trx',
-    
+
     'n_partners_received',
     'n_partners_received', 'n_partners_sent',
     'n_partners_received_log', 'n_partners_sent_log',
     'n_partners_received_stage_2', 'n_partners_sent_stage_2',
     'n_partners_received_stage_2_log', 'n_partners_sent_stage_2_log',
-    
+
     'count_received_intensity_log', 'count_sent_intensity_log',
-    'n_partners_ratio', 'n_transactions_ratio', 'count_intensity_ratio', 
+    'n_partners_ratio', 'n_transactions_ratio', 'count_intensity_ratio',
     'n_partners_stage_2_ratio', 'count_intensity',
-    
+
     'registration_time', 'first_trx_date', 'last_trx_date',
-    'registration_date', 'days_from_registr', 'account_type', 'business_type',
-    'area_name'
+    'registration_date', 'days_from_registr',
+    'account_type', 'business_type', 'area_name', 'area_type', 'gender'
 ]
 data.drop(columns=cols_to_drop, inplace=True)
 data = data.apply(lambda x: x.fillna(0))
 data = data.apply(lambda x: x.replace([np.inf, -np.inf], 0))
 
 # AFTER EDA SECOND #########################################################################################
+data.to_csv('data/data_p3.csv', index=False)
