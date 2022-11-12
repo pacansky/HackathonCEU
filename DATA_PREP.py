@@ -255,6 +255,7 @@ col_to_transform = ['amount_received_intensity', 'amount_sent_intensity',
     'amount_intensity', 'balance_growth', 'amount_penalties', 'amount_bonuses',
     'amount_total', 'amount_sent', 'amount_received']
 ####
+data = data.fillna(0)
 
 for t, c in zip(data[col_to_transform].dtypes, data[col_to_transform].columns):
     if t in ('int64', 'float64'):
