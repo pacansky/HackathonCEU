@@ -299,6 +299,7 @@ cols_to_drop = [
     'account_type', 'business_type', 'area_name', 'area_type', 'gender'
 ]
 data.drop(columns=cols_to_drop, inplace=True)
+data.drop(col_to_transform, inplace=True)
 data = data.apply(lambda x: x.fillna(0))
 data = data.apply(lambda x: x.replace([np.inf, -np.inf], 0))
 
