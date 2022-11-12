@@ -1,5 +1,9 @@
+# PRESETS ##############################################################################################
 import pandas as pd
 import numpy as np
+
+
+# BEFORE EDA ###########################################################################################
 data_train = pd.read_csv('data/sdsh2022_sarafu_trainset.csv')
 data_users = pd.read_csv('data/sdsh2022_sarafu_users.csv')
 data_trxs = pd.read_csv('data/sdsh2022_sarafu_transactions.csv')
@@ -7,7 +11,7 @@ data_trxs['is_bonus'] = np.where(data_trxs['source'] == -1, 1, 0)
 data_trxs['is_penalty'] = np.where(data_trxs['target'] == -1, 1, 0)
 data_trxs['date'] = pd.to_datetime(data_trxs['time']).dt.date
 
-stage_2_days = 60
+stage_2_days = 30
 
 data = data_train.merge(data_users, on='id', how='left')
 
@@ -71,6 +75,7 @@ data['n_transactions'] = data['n_transactions_received']+data['n_transactions_se
 data['n_partners'] = data['n_partners_received']+data['n_partners_sent']
 data['registration_date'] = pd.to_datetime(data['registration_time']).dt.date
 data['days_before_first_trx'] = data['first_trx_date'] - data['registration_date']
+data['days_before_first_trx'] = data['days_before_first_trx'].dt.days.fillna(0)
 
 data.rename(columns={"is_bonus": "n_bonuses", "is_penalty": "n_penalties"}, inplace=True)
 
@@ -91,7 +96,7 @@ data['n_partners_received'] = data['n_partners_received'].fillna(0)
 data['n_partners_sent'] = data['n_partners_sent'].fillna(0)
 data['n_transactions'] = data['n_transactions'].fillna(0)
 data['n_partners'] = data['n_partners'].fillna(0)
-data['days_before_first_trx'] = data['days_before_first_trx'].astype('int64').fillna(0)
+
 data['count_intensity'] = data['count_intensity'].fillna(0)
 data['count_sent_intensity'] = data['count_sent_intensity'].fillna(0)
 data['count_received_intensity'] = data['count_received_intensity'].fillna(0)
@@ -153,4 +158,82 @@ data['avg_time_between_trxs'] = data['days_from_registr']/data['n_transactions']
 data = data.apply(lambda x: x.replace([np.inf, -np.inf], 0))
 data = data.apply(lambda x: x.fillna(0))
 
+
+#BEFORE EDA SECOND ########################################################################################
 data.to_csv('data/data_p2.csv', index=False)
+
+
+# AFTER EDA ###############################################################################################
+data = pd.read_csv('data/data_p2.csv')
+
+data['start_balance_log'] = np.log(data['start_balance']).replace([np.inf, -np.inf], 0)
+data['n_transactions_log'] = np.log(data['n_transactions']).replace([np.inf, -np.inf], 0)
+data['n_transactions_received_log'] = np.log(data['n_transactions_received']
+                                            ).replace([np.inf, -np.inf], 0)
+data['n_transactions_sent_log'] = np.log(data['n_transactions_sent']).replace([np.inf, -np.inf], 0)
+data['n_bonuses_log'] = np.log(data['n_bonuses']).replace([np.inf, -np.inf], 0)
+#data['n_penalties'] = data['start_balance']
+data['n_partners_log'] = np.log(data['n_partners']).replace([np.inf, -np.inf], 0)
+data['n_partners_stage_2_log'] = np.log(data['n_partners_stage_2']).replace([np.inf, -np.inf], 0)
+data['n_partners_received_log'] = np.log(data['n_partners_received']).replace([np.inf, -np.inf], 0)
+data['n_partners_received_stage_2_log'] = np.log(data['n_partners_received_stage_2']
+                                                ).replace([np.inf, -np.inf], 0)
+data['n_partners_sent_log'] = np.log(data['n_partners_sent']).replace([np.inf, -np.inf], 0)
+data['n_partners_sent_stage_2_log'] = np.log(data['n_partners_sent_stage_2']
+                                            ).replace([np.inf, -np.inf], 0)
+data['days_before_first_trx_log'] = np.log(data['days_before_first_trx']
+                                          ).replace([np.inf, -np.inf], 0)
+data['count_received_intensity_log'] = np.log(data['count_received_intensity']
+                                          ).replace([np.inf, -np.inf], 0)
+data['count_sent_intensity_log'] = np.log(data['count_sent_intensity']
+                                          ).replace([np.inf, -np.inf], 0)
+data['count_intensity_log'] = np.log(data['count_intensity']).replace([np.inf, -np.inf], 0)
+
+data['n_partners_ratio'] = data['n_partners_received']/data['n_partners_sent']
+data['n_partners_ratio_log'] = data['n_partners_received_log']/data['n_partners_sent_log']
+
+data['n_transactions_ratio'] = data['n_transactions_received']/data['n_transactions_sent']
+data['n_transactions_ratio_log'] = (
+    data['n_transactions_received_log']/data['n_transactions_sent_log']
+)
+
+data['count_intensity_ratio'] = data['count_received_intensity']/data['count_sent_intensity']
+data['count_intensity_ratio_log'] = (
+    data['count_received_intensity_log']/data['count_sent_intensity_log']
+)
+
+data['n_partners_stage_2_ratio'] = (data['n_partners_received_stage_2']/
+                                    data['n_partners_sent_stage_2'])
+data['n_partners_stage_2_ratio_log'] = (data['n_partners_received_stage_2_log']/
+                                        data['n_partners_sent_stage_2_log'])
+#data_penalties = np.
+
+cols_to_drop = [
+    'id', 'start_balance',
+    'n_bonuses', 'n_penalties',
+    'n_transactions', 
+    'n_transactions_received', 'n_transactions_sent',
+    'n_transactions_received_log', 'n_transactions_sent_log',
+    'count_received_intensity', 'count_sent_intensity',
+    'n_partners', 'n_partners_stage_2', 
+    'days_before_first_trx',
+    
+    'n_partners_received',
+    'n_partners_received', 'n_partners_sent',
+    'n_partners_received_log', 'n_partners_sent_log',
+    'n_partners_received_stage_2', 'n_partners_sent_stage_2',
+    'n_partners_received_stage_2_log', 'n_partners_sent_stage_2_log',
+    
+    'count_received_intensity_log', 'count_sent_intensity_log',
+    'n_partners_ratio', 'n_transactions_ratio', 'count_intensity_ratio', 
+    'n_partners_stage_2_ratio', 'count_intensity',
+    
+    'registration_time', 'first_trx_date', 'last_trx_date',
+    'registration_date', 'days_from_registr', 'account_type', 'business_type',
+    'area_name'
+]
+data.drop(columns=cols_to_drop, inplace=True)
+data = data.apply(lambda x: x.fillna(0))
+data = data.apply(lambda x: x.replace([np.inf, -np.inf], 0))
+
+# AFTER EDA SECOND #########################################################################################
